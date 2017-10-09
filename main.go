@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
@@ -13,10 +14,10 @@ func main() {
 
 	mw := multiWeatherProvider{
 		openWeatherMap{
-			apiKey: "f420e9a74c2ba93d7e66ee855a589f64",
+			apiKey: os.Getenv("OPEN_WEATHER_MAP_APIKEY"),
 		},
 		weatherUnderground{
-			apiKey: "8d04401ac9ae1608",
+			apiKey: os.Getenv("WEATHER_UNDERGROUND_APIKEY"),
 		},
 	}
 
