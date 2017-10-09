@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 )
@@ -11,7 +10,6 @@ func main() {
 	http.HandleFunc("/hello", hello)
 
 	http.HandleFunc("/weather/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println(r.URL.Path)
 		city := strings.SplitN(r.URL.Path, "/", 3)[2]
 
 		data, err := query(city)
@@ -44,8 +42,6 @@ func query(city string) (weatherData, error) {
 	if err := json.NewDecoder(resp.Body).Decode(&d); err != nil {
 		return weatherData{}, err
 	}
-
-	fmt.Println(d)
 
 	return d, nil
 }
