@@ -50,6 +50,37 @@ type weatherProvider interface {
 	temperature(city string) (float64, error)
 }
 
+type multiWeatherProvider []weatherProvider
+
+func (w multiWeatherProvider) temperature(city string) (float64, error) {
+	temps := make(chan float64, len(w))
+	errs := make(chan error, len(w))
+
+	for _, provider := range w {
+		go func(p weatherProvider) {
+			k, err := p.temperature(city)
+			if err != nil {
+				errs <- err
+				return
+			}
+			temps <- k
+		}(provider)
+	}
+
+	sum := 0.0
+
+	for i := 0; i < len(w); i++ {
+		select {
+		case temp := <-temps:
+			sum += temp
+		case err := <-errs:
+			return 0, err
+		}
+	}
+
+	return sum / float64(len(w)), nil
+}
+
 type openWeatherMap struct {
 	apiKey string
 }
@@ -101,35 +132,4 @@ func (w weatherUnderground) temperature(city string) (float64, error) {
 	kelvin := d.Observation.Celsius + 273.15
 	log.Printf("weatherUnderground: %s: %.2f", city, kelvin)
 	return kelvin, nil
-}
-
-type multiWeatherProvider []weatherProvider
-
-func (w multiWeatherProvider) temperature(city string) (float64, error) {
-	temps := make(chan float64, len(w))
-	errs := make(chan error, len(w))
-
-	for _, provider := range w {
-		go func(p weatherProvider) {
-			k, err := p.temperature(city)
-			if err != nil {
-				errs <- err
-				return
-			}
-			temps <- k
-		}(provider)
-	}
-
-	sum := 0.0
-
-	for i := 0; i < len(w); i++ {
-		select {
-		case temp := <-temps:
-			sum += temp
-		case err := <-errs:
-			return 0, err
-		}
-	}
-
-	return sum / float64(len(w)), nil
 }
